@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda Clínica Veterinária</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        :root {
+            --verde1: #000000;
+            --verde2: #4CAF50;
+        }
+
+        #title { font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif; text-shadow: #00000054 6px 3px 10px; font-size: 200%;}
+        body { font-family: Arial, sans-serif; text-align: center; background-image: linear-gradient(to right, rgb(255, 255, 255) , rgba(149, 255, 0, 0.197), rgb(255, 255, 255)); margin-top: 40px;}
+        .container { width: 50%; margin: auto; padding: 20px; border-radius: 10px; border-style: solid; border-color: var(--verde1); max-width: 600px; min-width: 460px; background-color: white;}
+        button { width: 100%; margin: 5px 0; padding: 10px; border-radius: 6px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; border-radius: 3px;}
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; margin-top: 5px;}
+        th { background-color: var(--verde2); color: white; }
+        .actions { text-align: center;}
+        .actions button { margin: 5px 0px; }
+        input{border-radius: 6px; margin: 5px 0; padding: 10px; width: 95%; max-width: 776px;}
+        #tipo {border-radius: 6px; margin: 5px 0; padding: 10px; width: 100%; max-width: 800px;}
+
+        thead {
+            border-radius: 3px;
+            margin: 0px 5px;
+        }
+
+        button:hover {
+            background-color: rgba(60, 167, 249, 0.478);
+        }
+
+        #title:hover {
+            text-decoration: underline;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 id="title">Agenda Clínica Veterinária</h1>
+        <input class="input_text" type="text" id="dono" placeholder="Nome do dono">
+        <input class="input_text" type="text" id="pet" placeholder="Nome do pet">
+        <select id="tipo">
+            <option value="Consulta">Consulta</option>
+            <option value="Vacinação">Vacinação</option>
+            <option value="Cirurgia">Cirurgia</option>
+        </select>
+        <input type="datetime-local" id="data">
+        <button onclick="adicionarCompromisso()">Adicionar</button>
+
+        <h2>Compromissos</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Dono</th>
+                    <th>Pet</th>
+                    <th>Tipo</th>
+                    <th>Data</th>
+                    <th class="actions">Ações</th>
+                </tr>
+            </thead>
+            <tbody id="lista"></tbody>
+        </table>
+    </div>
+
+    <script>
+        const socket = io('http://localhost:8080');
+        
+        socket.on('lista', (compromissos) => {
+            const lista = document.getElementById('lista');
+            lista.innerHTML = '';
+            compromissos.forEach(c => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${c.dono}</td>
+                    <td>${c.pet}</td>
+                    <td>${c.tipo}</td>
+                    <td>${c.data}</td>
+                    <td class="actions">
+                        <button onclick="editarCompromisso(${c.id})">✏️</button>
+                        <button onclick="excluirCompromisso(${c.id})">🗑️</button>
+                    </td>
+                `;
+                lista.appendChild(row);
+            });
+        });
+
+        function adicionarCompromisso() {
+            const dono = document.getElementById('dono').value;
+            const pet = document.getElementById('pet').value;
+            const tipo = document.getElementById('tipo').value;
+            const data = document.getElementById('data').value;
+            if (dono && pet && data) {
+                socket.emit('novo-compromisso', { dono, pet, tipo, data });
+                document.getElementById('dono').value = '';
+                document.getElementById('pet').value = '';
+                document.getElementById('data').value = '';
+            }
+        }
+
+        function excluirCompromisso(id) {
+            socket.emit('excluir-compromisso', id);
+        }
+
+        function editarCompromisso(id) {
+            const novoDono = prompt("Novo nome do dono:");
+            const novoPet = prompt("Novo nome do pet:");
+            const novoTipo = prompt("Novo tipo (Consulta, Vacinação, Cirurgia):");
+            const novaData = prompt("Nova data (AAAA-MM-DDTHH:MM):");
+            if (novoDono && novoPet && novoTipo && novaData) {
+                socket.emit('alterar-compromisso', { id, dono: novoDono, pet: novoPet, tipo: novoTipo, data: novaData });
+            }
+        }
+    </script>
+</body>
+</html>
