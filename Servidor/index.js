@@ -57,4 +57,5 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => console.log('Cliente desconectado'));
 });
 
-server.listen('8080', () => console.log('Servidor rodando na porta 8080'));
+// server.listen('8080', () => console.log('Servidor rodando na porta 8080'));
+server.listen(8080, '0.0.0.0', () => console.log('Servidor rodando na porta 8080'));
